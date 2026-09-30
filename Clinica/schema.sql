@@ -1,0 +1,43 @@
+CREATE DATABASE IF NOT EXISTS clinica_nutricao CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE clinica_nutricao;
+
+CREATE TABLE usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(150) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  senha_hash VARCHAR(255) NOT NULL,
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE agendamentos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NULL,
+  nome VARCHAR(150) NOT NULL,
+  telefone VARCHAR(30) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  tipo VARCHAR(50) NOT NULL,
+  formato VARCHAR(20) NOT NULL,
+  data_consulta DATE NOT NULL,
+  horario TIME NOT NULL,
+  observacoes TEXT NULL,
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+CREATE TABLE contatos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(150) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  mensagem TEXT NOT NULL,
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE pagamentos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NULL,
+  valor DECIMAL(10,2) NOT NULL,
+  txid VARCHAR(40) NOT NULL,
+  status VARCHAR(20) DEFAULT 'pendente',
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+);
