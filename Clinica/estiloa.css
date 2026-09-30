@@ -104,7 +104,7 @@ nav{
 }
 .field input::placeholder, .field textarea::placeholder,
 .field.light input::placeholder, .field.light textarea::placeholder{color:var(--ink-faint);}
-.field select option{color:#000;}
+.field select option{color:#fff; background:var(--bg-3);}
 .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--accent); outline-offset:1px;}
 .field textarea{resize:vertical; min-height:80px;}
 
@@ -299,6 +299,30 @@ footer{border-top:1px solid var(--line); padding:48px 0 32px; background:var(--b
   .whatsapp-float{width:52px; height:52px; top:80px; right:18px;}
 }
 
+/* ---------- DUAS FORMAS DE PAGAMENTO LADO A LADO ---------- */
+.payment-methods-grid{display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:start;}
+.payment-method-box{background:var(--bg-2); border:1px solid var(--line); border-radius:10px; padding:32px;}
+.payment-method-title{
+  font-family:var(--serif); font-weight:800; font-size:1.3rem; margin-bottom:22px;
+  text-transform:uppercase; color:var(--accent);
+}
+@media (max-width: 880px){
+  .payment-methods-grid{grid-template-columns:1fr;}
+}
 
-
-
+select {
+    color: white;
+    background-color: #222;
+}
+ 
+option {
+    color: white;
+    background-color: #222;
+}
+ 
+/* Quando passar/selecionar uma opção */
+option:hover,
+option:checked {
+    color: white;
+    background-color: #333;
+}

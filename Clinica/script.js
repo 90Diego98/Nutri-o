@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', function () {
   initVideoCall();
   initContactForm();
   initWhatsappButton();
+  initCardForm();
+  initValorPreset('pix');
+  initValorPreset('cartao');
 });
 
 /* ---------------------------------------------------------
@@ -448,3 +451,85 @@ function initWhatsappButton() {
   document.body.appendChild(btn);
 }
 
+/* ---------------------------------------------------------
+   CARTÃO DE CRÉDITO — via fetch para cartao_process.php
+   (simulação: não há integração real com operadora de cartão)
+--------------------------------------------------------- */
+function initCardForm() {
+  const form = document.getElementById('cartao-form');
+  if (!form) return;
+
+  const numeroInput = document.getElementById('cartao-numero');
+  numeroInput.addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 19).replace(/(\d{4})(?=\d)/g, '$1 ');
+  });
+
+  const validadeInput = document.getElementById('cartao-validade');
+  validadeInput.addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '').slice(0, 4);
+    if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+    this.value = v;
+  });
+
+  const cvvInput = document.getElementById('cartao-cvv');
+  cvvInput.addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 4);
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const erroEl = document.getElementById('cartao-erro');
+    const resultBox = document.getElementById('cartao-resultado');
+    const submitBtn = form.querySelector('.submit-btn');
+    erroEl.textContent = '';
+    resultBox.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processando...';
+
+    fetch('cartao_process.php', {
+      method: 'POST',
+      body: new FormData(form)
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.ok) {
+          erroEl.textContent = data.msg || 'Não foi possível processar o pagamento.';
+          return;
+        }
+        resultBox.textContent = data.msg;
+        resultBox.style.display = 'block';
+        resultBox.style.borderColor = 'var(--accent)';
+        form.reset();
+      })
+      .catch(() => { erroEl.textContent = 'Erro de conexão. Tente novamente.'; })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Pagar com cartão';
+      });
+  });
+}
+
+/* ---------------------------------------------------------
+   VALORES PRÉ-SELECIONADOS (Pix e Cartão) — planos fixos
+   com opção de digitar um valor personalizado
+--------------------------------------------------------- */
+function initValorPreset(prefixo) {
+  const select = document.getElementById(prefixo + '-valor-select');
+  const wrap = document.getElementById(prefixo + '-valor-custom-wrap');
+  const input = document.getElementById(prefixo + '-valor');
+  if (!select || !wrap || !input) return;
+
+  function atualizar() {
+    if (select.value === 'outro') {
+      wrap.style.display = 'block';
+      input.value = '';
+      input.focus();
+    } else {
+      wrap.style.display = 'none';
+      input.value = select.value;
+    }
+  }
+
+  select.addEventListener('change', atualizar);
+  atualizar(); // já preenche com o primeiro valor da lista
+}
