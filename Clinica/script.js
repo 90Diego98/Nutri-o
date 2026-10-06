@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
   renderHeader();
   renderFooter();
   initMobileMenu();
-  initAuthModal();
+  initAuthPage();
   initScheduleForm();
   initTMBCalculator();
   initPixGenerator();
@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', function () {
   initCardForm();
   initValorPreset('pix');
   initValorPreset('cartao');
+  initEvolucaoForm();
+  initFotoPerfil();
 });
 
 /* ---------------------------------------------------------
@@ -40,6 +42,7 @@ function renderHeader() {
     { href: 'dieta.php', label: 'Dieta', key: 'dieta' },
     { href: 'consultaCMpersonal.php', label: 'Consulta Online', key: 'consulta' },
     { href: 'formaDepagamento.php', label: 'Pagamento', key: 'pagamento' },
+    ...(session.logged ? [{ href: 'perfil.php', label: 'Meu Perfil', key: 'perfil' }] : []),
     { href: 'contatos.php', label: 'Contato', key: 'contato' }
   ];
 
@@ -48,8 +51,8 @@ function renderHeader() {
     .join('');
 
   const authHtml = session.logged
-    ? `<span class="nav-user">Olá, ${escapeHtml(session.nome)}</span><a href="logout.php" class="nav-logout">Sair</a>`
-    : `<button class="nav-login" id="open-login" type="button">Entrar</button>`;
+    ? `<a href="perfil.php" class="nav-user" style="text-decoration:none; display:flex; align-items:center; gap:8px;"><span class="nav-avatar" id="nav-avatar"></span>Olá, ${escapeHtml(session.nome)}</a><a href="logout.php" class="nav-logout">Sair</a>`
+    : `<a href="entrar.php" class="nav-login" style="text-decoration:none; display:inline-block;">Entrar</a>`;
 
   headerEl.innerHTML = `
     <header>
@@ -63,58 +66,23 @@ function renderHeader() {
         </div>
       </nav>
     </header>
-
-    <div class="modal-overlay" id="login-modal">
-      <div class="modal-box">
-        <button class="modal-close" id="close-login" type="button" aria-label="Fechar">&times;</button>
-
-        <div id="login-box">
-          <h2>Entrar na sua conta</h2>
-          <p class="sub">Acesse para ver seus planos e histórico de consultas.</p>
-          <form id="login-form">
-            <div class="form-grid">
-              <div class="field light">
-                <label for="login-email">E-mail</label>
-                <input type="email" id="login-email" placeholder="voce@email.com" required>
-              </div>
-              <div class="field light">
-                <label for="login-senha">Senha</label>
-                <input type="password" id="login-senha" placeholder="********" required>
-              </div>
-            </div>
-            <button type="submit" class="submit-btn">Entrar</button>
-            <p class="form-error" id="login-erro"></p>
-          </form>
-          <p class="auth-toggle">Ainda não tem conta? <a id="show-register">Cadastre-se</a></p>
-        </div>
-
-        <div id="register-box">
-          <h2>Criar conta</h2>
-          <p class="sub">Leva menos de um minuto.</p>
-          <form id="register-form">
-            <div class="form-grid">
-              <div class="field light">
-                <label for="register-nome">Nome completo</label>
-                <input type="text" id="register-nome" placeholder="Seu nome" required>
-              </div>
-              <div class="field light">
-                <label for="register-email">E-mail</label>
-                <input type="email" id="register-email" placeholder="voce@email.com" required>
-              </div>
-              <div class="field light">
-                <label for="register-senha">Senha</label>
-                <input type="password" id="register-senha" placeholder="Mínimo 6 caracteres" required>
-              </div>
-            </div>
-            <button type="submit" class="submit-btn">Criar conta</button>
-            <p class="form-error" id="register-erro"></p>
-          </form>
-          <p class="auth-toggle">Já tem conta? <a id="show-login">Entrar</a></p>
-        </div>
-
-      </div>
-    </div>
   `;
+
+  if (session.logged) loadNavAvatar();
+}
+
+function loadNavAvatar() {
+  const avatarEl = document.getElementById('nav-avatar');
+  if (!avatarEl) return;
+
+  fetch('avatar_info.php')
+    .then(r => r.json())
+    .then(data => {
+      if (data.foto) {
+        avatarEl.innerHTML = `<img src="${data.foto}" alt="">`;
+      }
+    })
+    .catch(() => {});
 }
 
 function renderFooter() {
@@ -164,21 +132,12 @@ function initMobileMenu() {
 }
 
 /* ---------------------------------------------------------
-   LOGIN / CADASTRO — via fetch para login.php e register.php
+   LOGIN / CADASTRO (entrar.php) — via fetch para login.php e register.php
 --------------------------------------------------------- */
-function initAuthModal() {
-  const openBtn = document.getElementById('open-login');
-  const modal = document.getElementById('login-modal');
-  const closeBtn = document.getElementById('close-login');
-  if (!modal) return;
-
-  if (openBtn) openBtn.addEventListener('click', () => modal.classList.add('active'));
-  closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.remove('active');
-  });
-
+function initAuthPage() {
   const loginBox = document.getElementById('login-box');
+  if (!loginBox) return;
+
   const registerBox = document.getElementById('register-box');
   document.getElementById('show-register').addEventListener('click', () => {
     loginBox.style.display = 'none';
@@ -188,6 +147,9 @@ function initAuthModal() {
     registerBox.style.display = 'none';
     loginBox.style.display = 'block';
   });
+
+  const params = new URLSearchParams(window.location.search);
+  const destino = params.get('voltar') || 'index.php';
 
   document.getElementById('login-form').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -205,7 +167,7 @@ function initAuthModal() {
       .then(r => r.json())
       .then(data => {
         if (data.ok) {
-          window.location.reload();
+          window.location.href = destino;
         } else {
           erroEl.textContent = data.msg || 'Não foi possível entrar.';
         }
@@ -230,7 +192,7 @@ function initAuthModal() {
       .then(r => r.json())
       .then(data => {
         if (data.ok) {
-          window.location.reload();
+          window.location.href = destino;
         } else {
           erroEl.textContent = data.msg || 'Não foi possível criar a conta.';
         }
@@ -452,6 +414,25 @@ function initWhatsappButton() {
 }
 
 /* ---------------------------------------------------------
+   ABAS DE PAGAMENTO (Pix / Cartão)
+--------------------------------------------------------- */
+function initPaymentTabs() {
+  const tabs = document.querySelectorAll('.payment-tab');
+  if (!tabs.length) return;
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', function () {
+      tabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+
+      document.querySelectorAll('.payment-panel').forEach(p => p.style.display = 'none');
+      const alvo = document.getElementById('panel-' + this.dataset.tab);
+      if (alvo) alvo.style.display = 'block';
+    });
+  });
+}
+
+/* ---------------------------------------------------------
    CARTÃO DE CRÉDITO — via fetch para cartao_process.php
    (simulação: não há integração real com operadora de cartão)
 --------------------------------------------------------- */
@@ -532,4 +513,75 @@ function initValorPreset(prefixo) {
 
   select.addEventListener('change', atualizar);
   atualizar(); // já preenche com o primeiro valor da lista
+}
+
+/* ---------------------------------------------------------
+   EVOLUÇÃO DE PESO (perfil.php) — via fetch para evolucao_process.php
+--------------------------------------------------------- */
+function initEvolucaoForm() {
+  const form = document.getElementById('evolucao-form');
+  if (!form) return;
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const erroEl = document.getElementById('evolucao-erro');
+    const sucessoEl = document.getElementById('evolucao-sucesso');
+    const submitBtn = form.querySelector('.submit-btn');
+    erroEl.textContent = '';
+    sucessoEl.style.display = 'none';
+    submitBtn.disabled = true;
+
+    fetch('evolucao_process.php', {
+      method: 'POST',
+      body: new FormData(form)
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.ok) {
+          erroEl.textContent = data.msg || 'Não foi possível salvar.';
+          return;
+        }
+        sucessoEl.textContent = data.msg;
+        sucessoEl.style.display = 'block';
+        setTimeout(() => { window.location.reload(); }, 900);
+      })
+      .catch(() => { erroEl.textContent = 'Erro de conexão. Tente novamente.'; })
+      .finally(() => { submitBtn.disabled = false; });
+  });
+}
+
+/* ---------------------------------------------------------
+   FOTO DE PERFIL (perfil.php) — via fetch para foto_process.php
+--------------------------------------------------------- */
+function initFotoPerfil() {
+  const input = document.getElementById('foto-input');
+  if (!input) return;
+
+  const erroEl = document.getElementById('foto-erro');
+  const sucessoEl = document.getElementById('foto-sucesso');
+
+  input.addEventListener('change', function () {
+    if (!this.files || !this.files[0]) return;
+    erroEl.textContent = '';
+    sucessoEl.style.display = 'none';
+
+    const formData = new FormData();
+    formData.append('foto', this.files[0]);
+
+    fetch('foto_process.php', {
+      method: 'POST',
+      body: formData
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.ok) {
+          erroEl.textContent = data.msg || 'Não foi possível enviar a foto.';
+          return;
+        }
+        sucessoEl.textContent = data.msg;
+        sucessoEl.style.display = 'block';
+        setTimeout(() => { window.location.reload(); }, 1400);
+      })
+      .catch(() => { erroEl.textContent = 'Erro de conexão. Tente novamente.'; });
+  });
 }

@@ -38,6 +38,19 @@ CREATE TABLE pagamentos (
   valor DECIMAL(10,2) NOT NULL,
   txid VARCHAR(40) NOT NULL,
   status VARCHAR(20) DEFAULT 'pendente',
+  forma VARCHAR(20) DEFAULT 'pix',
+  cartao_final VARCHAR(4) NULL,
   criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 );
+
+CREATE TABLE evolucao (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NOT NULL,
+  peso DECIMAL(5,2) NOT NULL,
+  observacao VARCHAR(255) NULL,
+  registrado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+
