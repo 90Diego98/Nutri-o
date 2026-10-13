@@ -57,6 +57,11 @@
             <div class="field light">
               <label for="register-senha">Senha</label>
               <input type="password" id="register-senha" placeholder="Mínimo 6 caracteres" required>
+              <p class="form-note" style="margin-top:6px; margin-bottom:0;">Pelo menos 6 caracteres, 1 letra maiúscula e 1 número.</p>
+            </div>
+            <div class="field light">
+              <label for="register-senha-confirma">Confirmar senha</label>
+              <input type="password" id="register-senha-confirma" placeholder="Repita a senha" required>
             </div>
           </div>
           <button type="submit" class="submit-btn">Criar conta</button>

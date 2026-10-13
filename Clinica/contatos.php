@@ -44,6 +44,10 @@
             <h4>Horário de atendimento</h4>
             <p>Seg a sex — 8h às 18h · Sáb — 8h às 12h</p>
           </li>
+          <li>
+            <h4>Instagram</h4>
+            <a href="https://www.instagram.com/raizenutriente" target="_blank" rel="noopener noreferrer">@raizenutriente</a>
+          </li>
         </ul>
         <iframe
           class="map-frame"

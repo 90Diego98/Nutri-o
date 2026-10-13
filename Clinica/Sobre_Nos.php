@@ -27,9 +27,9 @@
     <div class="panel-light">
       <h2>Nossa história</h2>
       <p>A Raiz&Nutriente nasceu com um propósito simples: ajudar pessoas a alcançarem suas metas.
-         Ao longo dos últimos anos, já acompanhamos centenas de pacientes, sempre com atendimento individualizado e baseado em evidências científicas.</p>
+        Ao longo dos últimos anos, já acompanhamos centenas de pacientes, sempre com atendimento individualizado e baseado em evidências científicas.</p>
       <p>Acreditamos que não existe fórmula única — cada corpo, cada rotina e cada história pedem um plano diferente. Por isso,
-         cada acompanhamento aqui começa com escuta, não com uma dieta pronta.</p>
+        cada acompanhamento aqui começa com escuta, não com uma dieta pronta.</p>
     </div>
   </div>
 </section>

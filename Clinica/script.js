@@ -51,7 +51,7 @@ function renderHeader() {
     .join('');
 
   const authHtml = session.logged
-    ? `<a href="perfil.php" class="nav-user" style="text-decoration:none; display:flex; align-items:center; gap:8px;"><span class="nav-avatar" id="nav-avatar"></span>Olá, ${escapeHtml(session.nome)}</a><a href="logout.php" class="nav-logout">Sair</a>`
+    ? `<a href="perfil.php" class="nav-user" style="text-decoration:none; display:flex; align-items:center; gap:8px;"><span class="nav-avatar" id="nav-avatar"></span>${escapeHtml(session.nome)}</a><a href="logout.php" class="nav-logout">Sair</a>`
     : `<a href="entrar.php" class="nav-login" style="text-decoration:none; display:inline-block;">Entrar</a>`;
 
   headerEl.innerHTML = `
@@ -180,13 +180,25 @@ function initAuthPage() {
     const erroEl = document.getElementById('register-erro');
     erroEl.textContent = '';
 
+    const senha = document.getElementById('register-senha').value;
+    const senhaConfirma = document.getElementById('register-senha-confirma').value;
+
+    if (senha.length < 6 || !/[A-Z]/.test(senha) || !/[0-9]/.test(senha)) {
+      erroEl.textContent = 'A senha precisa ter pelo menos 6 caracteres, 1 letra maiúscula e 1 número.';
+      return;
+    }
+    if (senha !== senhaConfirma) {
+      erroEl.textContent = 'As senhas não coincidem.';
+      return;
+    }
+
     fetch('register.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nome: document.getElementById('register-nome').value,
         email: document.getElementById('register-email').value,
-        senha: document.getElementById('register-senha').value
+        senha: senha
       })
     })
       .then(r => r.json())
@@ -551,7 +563,7 @@ function initEvolucaoForm() {
 }
 
 /* ---------------------------------------------------------
-   FOTO DE PERFIL (perfil.php) — via fetch para foto_process.php
+  FOTO DE PERFIL (perfil.php) — via fetch para foto_process.php
 --------------------------------------------------------- */
 function initFotoPerfil() {
   const input = document.getElementById('foto-input');
