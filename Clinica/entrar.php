@@ -32,7 +32,10 @@
             </div>
             <div class="field light">
               <label for="login-senha">Senha</label>
-              <input type="password" id="login-senha" placeholder="********" required>
+              <div class="senha-wrap">
+                <input type="password" id="login-senha" placeholder="********" required>
+                <button type="button" class="senha-olho" data-alvo="login-senha" aria-label="Mostrar senha">&#128065;</button>
+              </div>
             </div>
           </div>
           <button type="submit" class="submit-btn">Entrar</button>
@@ -56,12 +59,18 @@
             </div>
             <div class="field light">
               <label for="register-senha">Senha</label>
-              <input type="password" id="register-senha" placeholder="Mínimo 6 caracteres" required>
+              <div class="senha-wrap">
+                <input type="password" id="register-senha" placeholder="Mínimo 6 caracteres" required>
+                <button type="button" class="senha-olho" data-alvo="register-senha" aria-label="Mostrar senha">&#128065;</button>
+              </div>
               <p class="form-note" style="margin-top:6px; margin-bottom:0;">Pelo menos 6 caracteres, 1 letra maiúscula e 1 número.</p>
             </div>
             <div class="field light">
               <label for="register-senha-confirma">Confirmar senha</label>
-              <input type="password" id="register-senha-confirma" placeholder="Repita a senha" required>
+              <div class="senha-wrap">
+                <input type="password" id="register-senha-confirma" placeholder="Repita a senha" required>
+                <button type="button" class="senha-olho" data-alvo="register-senha-confirma" aria-label="Mostrar senha">&#128065;</button>
+              </div>
             </div>
           </div>
           <button type="submit" class="submit-btn">Criar conta</button>

@@ -46,7 +46,9 @@ function nomePlano($valor) {
 </head>
 <body data-page="perfil">
 
-<div id="site-header"></div>
+<div style="padding: 24px 28px 0; text-align: left;">
+    <a href="index.php" class="btn-primary">Voltar</a>
+</div>
 
 <?php if (!$logado): ?>
 
@@ -65,7 +67,7 @@ function nomePlano($valor) {
 
   <section class="page-hero">
     <div class="wrap">
-      <div class="perfil-topo">
+      <div class="perfil-topo" style="margin-top:0;">
         <div class="perfil-avatar-wrap">
           <?php if ($usuario['foto'] && $usuario['foto_aprovada']): ?>
             <img src="<?php echo htmlspecialchars($usuario['foto']); ?>" alt="Foto de perfil" class="perfil-avatar" id="avatar-preview">
@@ -218,8 +220,6 @@ function nomePlano($valor) {
   </section>
 
 <?php endif; ?>
-
-<div id="site-footer"></div>
 
 <script>
   window.SITE_SESSION = {

@@ -15,7 +15,7 @@
 <div id="site-header"></div>
 
 <section class="hero">
-<div class="wrap" style="display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:48px; align-items:center;">
+<div class="wrap" style="display:grid; grid-template-columns:1.2fr 1fr; gap:50px; align-items:center;">
     <div>
       <div class="hero-eyebrow">Nutrição clínica e comportamental</div>
       <h1>Um plano alimentar que <em>faz sentido</em> pra sua rotina</h1>
@@ -31,14 +31,6 @@
         <div class="num">+900</div>
         <div class="label">pacientes acompanhados nos últimos 6 anos</div>
       </div>
-    </div>
-    <div class="hero-side">
-      <h3>Benefícios do acompanhamento nutricional</h3>
-      <p>
-          Mais energia, sono melhor, digestão leve e peso sob controle.
-          Plano personalizado baseado em ciência, feito pra sua rotina real.
-          Resultados duradouros, sem dietas da moda.
-          Cuide da saúde com acompanhamento de verdade.</p>
     </div>
   </div>
 </section>

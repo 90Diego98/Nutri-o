@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function () {
   initValorPreset('cartao');
   initEvolucaoForm();
   initFotoPerfil();
+  initSenhaOlho();
+  initCarrinho();
+  initCheckout();
 });
 
 /* ---------------------------------------------------------
@@ -41,6 +44,7 @@ function renderHeader() {
     { href: 'planosDeProjetiho.php', label: 'Planos', key: 'planos' },
     { href: 'dieta.php', label: 'Dieta', key: 'dieta' },
     { href: 'consultaCMpersonal.php', label: 'Consulta Online', key: 'consulta' },
+    { href: 'loja.php', label: 'Loja', key: 'loja' },
     { href: 'formaDepagamento.php', label: 'Pagamento', key: 'pagamento' },
     ...(session.logged ? [{ href: 'perfil.php', label: 'Meu Perfil', key: 'perfil' }] : []),
     { href: 'contatos.php', label: 'Contato', key: 'contato' }
@@ -287,6 +291,17 @@ function initTMBCalculator() {
 }
 
 /* ---------------------------------------------------------
+   Lê o valor escolhido no formulário (lista de planos ou campo
+   "outro valor") — usado pelo Pix e pelo cartão
+--------------------------------------------------------- */
+function obterValorForm(form) {
+  const select = form.querySelector('select[id$="-valor-select"]');
+  if (select && select.value !== 'outro') return select.value;
+  const custom = form.querySelector('input[name="valor"], input[id$="-valor"], input[type="number"]');
+  return custom ? custom.value : '';
+}
+
+/* ---------------------------------------------------------
    PAGAMENTO VIA PIX — o payload agora é gerado no servidor
    (pix_process.php), que também registra o pagamento no banco.
    Aqui só desenhamos o QR Code a partir do payload recebido.
@@ -300,9 +315,17 @@ function initPixGenerator() {
     const erroEl = document.getElementById('pix-erro');
     erroEl.textContent = '';
 
+    const valorPix = parseFloat(obterValorForm(form));
+    if (!valorPix || valorPix <= 0) {
+      erroEl.textContent = 'Informe um valor válido.';
+      return;
+    }
+    const dadosPix = new FormData(form);
+    dadosPix.set('valor', valorPix.toFixed(2));
+
     fetch('pix_process.php', {
       method: 'POST',
-      body: new FormData(form)
+      body: dadosPix
     })
       .then(r => r.json())
       .then(data => {
@@ -476,12 +499,20 @@ function initCardForm() {
     const submitBtn = form.querySelector('.submit-btn');
     erroEl.textContent = '';
     resultBox.style.display = 'none';
+    const valorCartao = parseFloat(obterValorForm(form));
+    if (!valorCartao || valorCartao <= 0) {
+      erroEl.textContent = 'Informe um valor válido.';
+      return;
+    }
+    const dadosCartao = new FormData(form);
+    dadosCartao.set('valor', valorCartao.toFixed(2));
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'Processando...';
 
     fetch('cartao_process.php', {
       method: 'POST',
-      body: new FormData(form)
+      body: dadosCartao
     })
       .then(r => r.json())
       .then(data => {
@@ -508,9 +539,9 @@ function initCardForm() {
 --------------------------------------------------------- */
 function initValorPreset(prefixo) {
   const select = document.getElementById(prefixo + '-valor-select');
-  const wrap = document.getElementById(prefixo + '-valor-custom-wrap');
   const input = document.getElementById(prefixo + '-valor');
-  if (!select || !wrap || !input) return;
+  if (!select || !input) return;
+  const wrap = document.getElementById(prefixo + '-valor-custom-wrap') || input.closest('.field') || input;
 
   function atualizar() {
     if (select.value === 'outro') {
@@ -524,7 +555,28 @@ function initValorPreset(prefixo) {
   }
 
   select.addEventListener('change', atualizar);
-  atualizar(); // já preenche com o primeiro valor da lista
+
+  // Se veio da loja/carrinho com um valor na URL (?valor=129.90&produto=Whey),
+  // trava o valor: esconde a seleção e mostra só o preço fixo pra pagar.
+  const params = new URLSearchParams(window.location.search);
+  const valorUrl = params.get('valor');
+  const produtoUrl = params.get('produto');
+
+  if (valorUrl) {
+    select.closest('.field').style.display = 'none';
+    wrap.style.display = 'none';
+    input.value = valorUrl;
+
+    const valorFixo = document.createElement('div');
+    valorFixo.className = 'valor-fixo-box';
+    valorFixo.innerHTML = `
+      <div class="valor-fixo-label">${produtoUrl ? escapeHtml(produtoUrl) : 'Valor a pagar'}</div>
+      <div class="valor-fixo-preco">R$ ${parseFloat(valorUrl).toFixed(2).replace('.', ',')}</div>
+    `;
+    wrap.parentNode.insertBefore(valorFixo, wrap);
+  } else {
+    atualizar(); // já preenche com o primeiro valor da lista
+  }
 }
 
 /* ---------------------------------------------------------
@@ -563,7 +615,7 @@ function initEvolucaoForm() {
 }
 
 /* ---------------------------------------------------------
-  FOTO DE PERFIL (perfil.php) — via fetch para foto_process.php
+   FOTO DE PERFIL (perfil.php) — via fetch para foto_process.php
 --------------------------------------------------------- */
 function initFotoPerfil() {
   const input = document.getElementById('foto-input');
@@ -597,3 +649,202 @@ function initFotoPerfil() {
       .catch(() => { erroEl.textContent = 'Erro de conexão. Tente novamente.'; });
   });
 }
+
+/* ---------------------------------------------------------
+   MOSTRAR/ESCONDER SENHA (entrar.php) — ícone de olho
+--------------------------------------------------------- */
+function initSenhaOlho() {
+  document.querySelectorAll('.senha-olho').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const input = document.getElementById(this.dataset.alvo);
+      if (!input) return;
+      const mostrando = input.type === 'text';
+      input.type = mostrando ? 'password' : 'text';
+      this.style.opacity = mostrando ? '0.5' : '1';
+    });
+  });
+}
+
+/* ---------------------------------------------------------
+   CARRINHO DE COMPRAS (loja.php) — guardado no localStorage
+--------------------------------------------------------- */
+function getCarrinho() {
+  try {
+    return JSON.parse(localStorage.getItem('rn_carrinho') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function salvarCarrinho(itens) {
+  localStorage.setItem('rn_carrinho', JSON.stringify(itens));
+}
+
+function initCarrinho() {
+  const btnAbrir = document.getElementById('carrinho-btn');
+  if (!btnAbrir) return; // só roda na página da loja
+
+  const overlay = document.getElementById('carrinho-overlay');
+  const btnFechar = document.getElementById('carrinho-fechar');
+  const listaEl = document.getElementById('carrinho-lista');
+  const vazioEl = document.getElementById('carrinho-vazio');
+  const totalEl = document.getElementById('carrinho-total-valor');
+  const contadorEl = document.getElementById('carrinho-contador');
+  const btnFinalizar = document.getElementById('carrinho-finalizar');
+
+  function renderizar() {
+    const itens = getCarrinho();
+    const totalQtd = itens.reduce((soma, i) => soma + i.qtd, 0);
+
+    contadorEl.textContent = totalQtd;
+    contadorEl.style.display = totalQtd > 0 ? 'flex' : 'none';
+
+    if (itens.length === 0) {
+      listaEl.innerHTML = '';
+      vazioEl.style.display = 'block';
+      totalEl.textContent = 'R$ 0,00';
+      return;
+    }
+    vazioEl.style.display = 'none';
+
+    let total = 0;
+    listaEl.innerHTML = itens.map((item, idx) => {
+      total += item.preco * item.qtd;
+      return `
+        <div class="carrinho-item">
+          <div class="carrinho-item-img">${item.imagem ? `<img src="${item.imagem}" alt="" onerror="this.style.display='none'">` : ''}</div>
+          <div class="carrinho-item-info">
+            <div class="carrinho-item-nome">${escapeHtml(item.nome)}</div>
+            <div class="carrinho-item-preco">R$ ${item.preco.toFixed(2).replace('.', ',')}</div>
+            <div class="carrinho-item-qtd">
+              <button type="button" class="qtd-btn" data-idx="${idx}" data-acao="menos">−</button>
+              <span>${item.qtd}</span>
+              <button type="button" class="qtd-btn" data-idx="${idx}" data-acao="mais">+</button>
+              <button type="button" class="qtd-remover" data-idx="${idx}">Remover</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+  }
+
+  // Adicionar produto ao carrinho
+  document.querySelectorAll('.add-carrinho-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const nome = this.dataset.nome;
+      const preco = parseFloat(this.dataset.preco);
+      const imagem = this.dataset.imagem || '';
+
+      const itens = getCarrinho();
+      const existente = itens.find(i => i.nome === nome);
+      if (existente) {
+        existente.qtd += 1;
+      } else {
+        itens.push({ nome, preco, imagem, qtd: 1 });
+      }
+      salvarCarrinho(itens);
+      renderizar();
+
+      const textoOriginal = this.textContent;
+      this.textContent = 'Adicionado!';
+      setTimeout(() => { this.textContent = textoOriginal; }, 1200);
+    });
+  });
+
+  // Abrir/fechar o painel
+  btnAbrir.addEventListener('click', function () {
+    renderizar();
+    overlay.classList.add('open');
+  });
+  btnFechar.addEventListener('click', () => overlay.classList.remove('open'));
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+
+  // Alterar quantidade / remover (delegação de evento, já que a lista é recriada)
+  listaEl.addEventListener('click', function (e) {
+    const idx = e.target.dataset.idx;
+    if (idx === undefined) return;
+    const itens = getCarrinho();
+
+    if (e.target.classList.contains('qtd-btn')) {
+      if (e.target.dataset.acao === 'mais') itens[idx].qtd += 1;
+      else itens[idx].qtd = Math.max(1, itens[idx].qtd - 1);
+    } else if (e.target.classList.contains('qtd-remover')) {
+      itens.splice(idx, 1);
+    } else {
+      return;
+    }
+    salvarCarrinho(itens);
+    renderizar();
+  });
+
+  // Finalizar compra — soma tudo e manda pra página de pagamento
+  btnFinalizar.addEventListener('click', function () {
+    const itens = getCarrinho();
+    if (itens.length === 0) return;
+
+    const total = itens.reduce((soma, i) => soma + (i.preco * i.qtd), 0);
+    const nomes = itens.map(i => `${i.qtd}x ${i.nome}`).join(', ');
+
+    localStorage.removeItem('rn_carrinho');
+    window.location.href = 'checkout.php?valor=' + total.toFixed(2) + '&produto=' + encodeURIComponent(nomes);
+  });
+
+  renderizar();
+}
+
+/* ---------------------------------------------------------
+   CHECKOUT (checkout.php) — resumo do pedido (carrinho ou
+   compra direta via ?valor=&produto=) + valor fixo pro pagamento
+--------------------------------------------------------- */
+function initCheckout() {
+  const itensEl = document.getElementById('checkout-itens');
+  if (!itensEl) return; // só roda no checkout.php
+
+  const vazioEl = document.getElementById('checkout-vazio');
+  const totalEl = document.getElementById('checkout-total');
+  const pagamentoEl = document.getElementById('checkout-pagamento');
+  const pixValorInput = document.getElementById('pix-valor');
+  const cartaoValorInput = document.getElementById('cartao-valor');
+
+  const params = new URLSearchParams(window.location.search);
+  const valorUrl = params.get('valor');
+  const produtoUrl = params.get('produto');
+
+  let itens = [];
+  if (valorUrl) {
+    itens = [{ nome: produtoUrl || 'Produto', preco: parseFloat(valorUrl), qtd: 1 }];
+  } else {
+    itens = getCarrinho();
+  }
+
+  if (itens.length === 0) {
+    vazioEl.style.display = 'block';
+    pagamentoEl.style.display = 'none';
+    return;
+  }
+
+  let total = 0;
+  itensEl.innerHTML = itens.map(function (item) {
+    total += item.preco * item.qtd;
+    return `
+      <div style="display:flex; justify-content:space-between; font-size:0.92rem; padding:8px 0; border-bottom:1px solid var(--line);">
+        <span>${item.qtd}x ${escapeHtml(item.nome)}</span>
+        <span>R$ ${(item.preco * item.qtd).toFixed(2).replace('.', ',')}</span>
+      </div>`;
+  }).join('');
+
+  totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+  pixValorInput.value = total.toFixed(2);
+  cartaoValorInput.value = total.toFixed(2);
+
+  // Depois de pagar, esvazia o carrinho (se a compra não foi feita via link direto da loja)
+  if (!valorUrl) {
+    const limparCarrinho = () => localStorage.removeItem('rn_carrinho');
+    document.getElementById('pix-form').addEventListener('submit', limparCarrinho);
+    document.getElementById('cartao-form').addEventListener('submit', limparCarrinho);
+  }
+}
+

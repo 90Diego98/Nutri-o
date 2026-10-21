@@ -18,4 +18,11 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 $stmt = $pdo->prepare('INSERT INTO contatos (nome, email, mensagem) VALUES (?, ?, ?)');
 $stmt->execute([$nome, $email, $mensagem]);
 
+$para = 'teste100@gmail.com';
+$assunto = 'Nova mensagem do site - ' . $nome;
+$corpo = "Nome: $nome\nE-mail: $email\n\nMensagem:\n$mensagem";
+$headers = "From: $email\r\nReply-To: $email\r\n";
+
+@mail($para, $assunto, $corpo, $headers);
+
 echo json_encode(['ok' => true, 'msg' => 'Mensagem enviada! Em breve entraremos em contato.']);
