@@ -41,9 +41,11 @@
           <button type="submit" class="submit-btn">Entrar</button>
           <p class="form-error" id="login-erro"></p>
         </form>
-        <p class="auth-toggle">Ainda não tem conta? <a id="show-register">Cadastre-se</a></p>
-      </div>
-
+    <p class="auth-toggle">
+      <a href="esqueci_senha.php">Esqueci minha senha</a>
+    </p>
+    <p class="auth-toggle">Ainda não tem conta? <a id="show-register">Cadastre-se</a></p>
+  </div>
       <div id="register-box" style="display:none;">
         <h2 style="font-family:var(--serif); font-weight:800; font-size:1.5rem; margin-bottom:6px;">Criar conta</h2>
         <p class="form-note" style="margin-bottom:26px;">Leva menos de um minuto.</p>

@@ -25,6 +25,27 @@ if ($logado) {
     $evolucao = $stmt->fetchAll();
 }
 
+/* ---------------------------------------------------------
+   LIBERAÇÃO DE ACESSO (Dieta e Consulta Online)
+   Só libera quem tem um pagamento de plano (220, 480 ou 1290)
+   com status confirmado. Compras da loja não contam.
+
+   - $statusLiberados: valores da coluna "status" que significam pago.
+     Confira no phpMyAdmin (tabela pagamentos) como o seu banco grava.
+   - $exigirPagamentoConfirmado: deixe false se quiser liberar já
+     com o pagamento "pendente" (útil pra testar/apresentar).
+--------------------------------------------------------- */
+$valoresPlanos = [220.00, 480.00, 1290.00];
+$statusLiberados = ['pago', 'aprovado', 'confirmado'];
+$exigirPagamentoConfirmado = true;
+
+$temPlano = false;
+foreach ($pagamentos as $pg) {
+    $valorOk = in_array(round((float) $pg['valor'], 2), $valoresPlanos, true);
+    $statusOk = !$exigirPagamentoConfirmado || in_array(strtolower($pg['status']), $statusLiberados, true);
+    if ($valorOk && $statusOk) { $temPlano = true; break; }
+}
+
 function nomePlano($valor) {
     $valor = (float) $valor;
     if ($valor >= 1290) return 'Acompanhamento trimestral';
@@ -216,6 +237,164 @@ function nomePlano($valor) {
           <p class="form-note">Nenhum registro ainda — adicione o primeiro acima.</p>
         <?php endif; ?>
       </div>
+
+<?php if ($temPlano): ?>
+      <!-- ===================== DIETA (movida de dieta.php) ===================== -->
+      <div class="payment-method-box" id="dieta" style="margin-top:28px;">
+        <h2 class="payment-method-title">Dieta e calculadora de TMB</h2>
+        <p class="form-note" style="margin-top:0; margin-bottom:22px;">Estime sua Taxa de Metabolismo Basal (TMB) e seu Gasto Energético Total (GET), o ponto de partida de qualquer plano alimentar. A fórmula é a de Mifflin-St Jeor.</p>
+
+        <form id="tmb-form">
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="field light">
+              <label for="tmb-sexo">Sexo biológico</label>
+              <select id="tmb-sexo" required>
+                <option value="feminino">Feminino</option>
+                <option value="masculino">Masculino</option>
+              </select>
+            </div>
+            <div class="field light">
+              <label for="tmb-idade">Idade (anos)</label>
+              <input type="number" id="tmb-idade" min="10" max="100" placeholder="Ex: 32" required>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="field light">
+              <label for="tmb-peso">Peso (kg)</label>
+              <input type="number" id="tmb-peso" min="30" max="300" step="0.1" placeholder="Ex: 68.5" required>
+            </div>
+            <div class="field light">
+              <label for="tmb-altura">Altura (cm)</label>
+              <input type="number" id="tmb-altura" min="100" max="230" placeholder="Ex: 170" required>
+            </div>
+          </div>
+          <div class="field light" style="margin-bottom:20px;">
+            <label for="tmb-atividade">Nível de atividade física</label>
+            <select id="tmb-atividade" required>
+              <option value="1.2">Sedentário (pouco ou nenhum exercício)</option>
+              <option value="1.375">Leve (exercício leve 1 a 3 dias/semana)</option>
+              <option value="1.55" selected>Moderado (exercício moderado 3 a 5 dias/semana)</option>
+              <option value="1.725">Intenso (exercício pesado 6 a 7 dias/semana)</option>
+              <option value="1.9">Muito intenso (treino físico + trabalho físico)</option>
+            </select>
+          </div>
+          <button type="submit" class="submit-btn" style="max-width:260px;">Calcular</button>
+        </form>
+
+        <div class="tmb-results" id="tmb-resultado">
+          <div class="tmb-result-card">
+            <div class="label">Taxa de Metabolismo Basal (TMB)</div>
+            <div class="value" id="tmb-valor">—</div>
+          </div>
+          <div class="tmb-result-card">
+            <div class="label">Gasto Energético Total (GET)</div>
+            <div class="value" id="get-valor">—</div>
+          </div>
+          <div class="macros">
+            <div class="macro-chip">
+              <div class="m-label">Proteínas / dia</div>
+              <div class="m-value" id="macro-proteina">—</div>
+            </div>
+            <div class="macro-chip">
+              <div class="m-label">Carboidratos / dia</div>
+              <div class="m-value" id="macro-carbo">—</div>
+            </div>
+            <div class="macro-chip">
+              <div class="m-label">Gorduras / dia</div>
+              <div class="m-value" id="macro-gordura">—</div>
+            </div>
+          </div>
+        </div>
+        <p class="form-note">Estimativa educativa, que não substitui uma avaliação nutricional individualizada. <a href="index.php#agendar" style="text-decoration:underline;">Agende uma consulta</a> para um plano feito sob medida.</p>
+
+        <h3 style="margin:28px 0 14px;">Boas práticas para o dia a dia</h3>
+        <div class="cards-grid cols-4">
+          <div class="card">
+            <h3>Hidratação</h3>
+            <p>Distribua a ingestão de água ao longo do dia, em vez de concentrar tudo à noite.</p>
+          </div>
+          <div class="card">
+            <h3>Fibras</h3>
+            <p>Inclua vegetais, frutas e grãos integrais nas principais refeições.</p>
+          </div>
+          <div class="card">
+            <h3>Regularidade</h3>
+            <p>Manter horários parecidos de refeição ajuda a regular a fome e a saciedade.</p>
+          </div>
+          <div class="card">
+            <h3>Sono</h3>
+            <p>Uma boa noite de sono influencia diretamente o apetite e o metabolismo.</p>
+          </div>
+        </div>
+      </div>
+      <!-- ===================== FIM DA DIETA ===================== -->
+
+      <!-- ===================== CONSULTA ONLINE (movida de consultaCMpersonal.php) ===================== -->
+      <div class="payment-method-box" id="consulta" style="margin-top:28px;">
+        <h2 class="payment-method-title">Consulta online</h2>
+
+        <div id="video-start-box">
+          <p class="form-note" style="margin-top:0; margin-bottom:22px;">Inicie a chamada em vídeo direto pelo navegador, sem instalar nenhum aplicativo. Ao entrar, seu navegador vai pedir permissão para usar câmera e microfone. A chamada é privada: só quem tiver o link da sala consegue entrar.</p>
+          <form id="video-form">
+            <div class="field light" style="margin-bottom:18px; max-width:360px;">
+              <label for="video-nome">Seu nome</label>
+              <input type="text" id="video-nome" placeholder="Como a nutricionista vai te chamar" value="<?php echo htmlspecialchars(explode(' ', $usuario['nome'])[0]); ?>" required>
+            </div>
+            <button type="submit" class="submit-btn" style="max-width:260px;">Iniciar videochamada</button>
+          </form>
+          <p class="form-note">Se a nutricionista ainda não estiver na sala, você entra em uma sala de espera até ela se conectar.</p>
+        </div>
+
+        <div id="video-call-box">
+          <iframe
+            id="video-iframe"
+            class="video-frame"
+            allow="camera; microphone; fullscreen; display-capture; autoplay"
+            allowfullscreen>
+          </iframe>
+          <div class="video-end-row">
+            <button type="button" id="video-end-btn">Encerrar chamada</button>
+          </div>
+        </div>
+
+        <h3 style="margin:28px 0 14px;">Como funciona</h3>
+        <div class="cards-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="card">
+            <h3>1. Agende</h3>
+            <p>Marque o formato "Online" no <a href="index.php#agendar">formulário de agendamento</a>.</p>
+          </div>
+          <div class="card">
+            <h3>2. Entre na sala</h3>
+            <p>No horário combinado, volte ao seu perfil e inicie a videochamada com seu nome.</p>
+          </div>
+          <div class="card">
+            <h3>3. Converse com a nutricionista</h3>
+            <p>A consulta acontece por vídeo, com a mesma qualidade de um atendimento presencial.</p>
+          </div>
+        </div>
+      </div>
+      <!-- ===================== FIM DA CONSULTA ONLINE ===================== -->
+
+<?php else: ?>
+      <!-- ===================== ÁREA BLOQUEADA (sem plano pago) ===================== -->
+      <div class="payment-method-box" id="dieta" style="margin-top:28px; max-width:560px;">
+        <div id="consulta"></div>
+        <h2 class="payment-method-title">Dieta e Consulta online</h2>
+        <?php
+          $temPagamentoPlano = false;
+          foreach ($pagamentos as $pg) {
+              if (in_array(round((float) $pg['valor'], 2), $valoresPlanos, true)) { $temPagamentoPlano = true; break; }
+          }
+        ?>
+        <?php if ($temPagamentoPlano): ?>
+          <p class="form-note" style="margin-top:0;">Seu pagamento ainda está pendente. Assim que for confirmado, a calculadora de dieta e a videochamada são liberadas aqui.</p>
+        <?php else: ?>
+          <p class="form-note" style="margin-top:0;">A calculadora de dieta e a consulta por videochamada são exclusivas para quem contrata um dos nossos planos.</p>
+          <a href="formaDepagamento.php" class="btn-primary" style="margin-top:12px; display:inline-block;">Ver planos e pagar</a>
+        <?php endif; ?>
+      </div>
+<?php endif; ?>
+
     </div>
   </section>
 
@@ -230,3 +409,4 @@ function nomePlano($valor) {
 <script src="script.js"></script>
 </body>
 </html>
+

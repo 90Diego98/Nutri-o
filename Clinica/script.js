@@ -42,8 +42,6 @@ function renderHeader() {
     { href: 'index.php', label: 'Início', key: 'index' },
     { href: 'Sobre_Nos.php', label: 'Sobre Nós', key: 'sobre' },
     { href: 'planosDeProjetiho.php', label: 'Planos', key: 'planos' },
-    { href: 'dieta.php', label: 'Dieta', key: 'dieta' },
-    { href: 'consultaCMpersonal.php', label: 'Consulta Online', key: 'consulta' },
     { href: 'loja.php', label: 'Loja', key: 'loja' },
     { href: 'formaDepagamento.php', label: 'Pagamento', key: 'pagamento' },
     ...(session.logged ? [{ href: 'perfil.php', label: 'Meu Perfil', key: 'perfil' }] : []),
@@ -55,7 +53,7 @@ function renderHeader() {
     .join('');
 
   const authHtml = session.logged
-    ? `<a href="perfil.php" class="nav-user" style="text-decoration:none; display:flex; align-items:center; gap:8px;"><span class="nav-avatar" id="nav-avatar"></span>${escapeHtml(session.nome)}</a><a href="logout.php" class="nav-logout">Sair</a>`
+? `<a href="perfil.php" class="nav-user" style="text-decoration:none; display:flex; align-items:center; gap:8px;"><span class="nav-avatar" id="nav-avatar"></span>${escapeHtml(session.nome)}</a><a href="logout.php" class="nav-cta">Sair</a>`
     : `<a href="entrar.php" class="nav-login" style="text-decoration:none; display:inline-block;">Entrar</a>`;
 
   headerEl.innerHTML = `
@@ -254,6 +252,7 @@ function initScheduleForm() {
 
 /* ---------------------------------------------------------
    CALCULADORA DE TMB (Mifflin-St Jeor) — só front-end
+   (agora fica dentro do perfil.php)
 --------------------------------------------------------- */
 function initTMBCalculator() {
   const form = document.getElementById('tmb-form');

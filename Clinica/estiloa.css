@@ -209,6 +209,16 @@ nav{
   opacity: 0.7;
 }
 
+/* Garante que o vídeo `.mp4` fica totalmente centrado e sem cortes */
+.hero-visual video.hero-visual-img {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 380px !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: 0 auto !important;
+}
+
 
 /* ---------- SECTIONS ---------- */
 .section{padding:80px 0;}

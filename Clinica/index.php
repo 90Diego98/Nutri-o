@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="estiloa.css">
+<link rel="icon" href="imagens/Logo-Raiz.jpeg" type="image/jpeg">
 </head>
 <body data-page="index">
 
@@ -26,13 +27,9 @@
       </div>
     </div>
     <div class="hero-visual">
-      <img src="imagens/hero.jpg" alt="Representando a nutrição saudável" class="hero-visual-img">
-      <div class="hero-visual-note">
-        <div class="num">+900</div>
-        <div class="label">pacientes acompanhados nos últimos 6 anos</div>
-      </div>
-    </div>
-  </div>
+      <video autoplay muted loop playsinline class="hero-visual-img">
+  <source src="imagens/1000134134.mp4" type="video/mp4">
+</video>
 </section>
 
 <section class="section alt-bg" id="explorar">
