@@ -8,7 +8,7 @@ $agendamentos = [];
 $evolucao = [];
 
 if ($logado) {
-    $stmt = $pdo->prepare('SELECT nome, email, foto, foto_aprovada, criado_em FROM usuarios WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT nome, email, foto, foto_aprovada, criado_em, is_admin FROM usuarios WHERE id = ?');
     $stmt->execute([$_SESSION['user_id']]);
     $usuario = $stmt->fetch();
 
@@ -44,6 +44,11 @@ foreach ($pagamentos as $pg) {
     $valorOk = in_array(round((float) $pg['valor'], 2), $valoresPlanos, true);
     $statusOk = !$exigirPagamentoConfirmado || in_array(strtolower($pg['status']), $statusLiberados, true);
     if ($valorOk && $statusOk) { $temPlano = true; break; }
+}
+
+// Administrador tem acesso a tudo, sem precisar pagar
+if ($logado && !empty($usuario['is_admin'])) {
+    $temPlano = true;
 }
 
 function nomePlano($valor) {
