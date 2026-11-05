@@ -709,4 +709,127 @@ footer{border-top:1px solid var(--line); padding:48px 0 32px; background:var(--b
     background: rgba(252, 165, 165, 0.12);
 }
 
+.admin-abas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 26px;
+}
+.admin-aba {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.admin-aba.ativo {
+    background: #facc15;
+    border-color: #facc15;
+    color: #111;
+    font-weight: 600;
+}
+.admin-contador {
+    background: #ef4444;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    padding: 1px 8px;
+    font-weight: 600;
+}
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+}
+.admin-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 22px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    text-decoration: none;
+}
+.admin-stat:hover { border-color: #facc15; }
+.admin-stat strong {
+    font-size: 2.2rem;
+    color: #facc15;
+}
+.admin-stat span {
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+.admin-scroll { overflow-x: auto; }
+.admin-btn {
+    display: inline-block;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #facc15;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-decoration: none;
+    margin: 2px 0;
+}
+.admin-btn:hover { background: rgba(250, 204, 21, 0.12); }
+.admin-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e5e7eb;
+}
+.admin-badge.st-pendente { background: rgba(250, 204, 21, 0.18); color: #facc15; }
+.admin-badge.st-pago,
+.admin-badge.st-confirmado,
+.admin-badge.st-respondida { background: rgba(34, 197, 94, 0.18); color: #4ade80; }
+.admin-badge.st-cancelado { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+.admin-fotos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 18px;
+    margin-top: 16px;
+}
+.admin-foto-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+}
+.admin-foto-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+.admin-foto-card small { color: #9ca3af; }
+.admin-msg {
+    padding: 16px 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(250, 204, 21, 0.35);
+    background: rgba(255, 255, 255, 0.04);
+    margin-top: 14px;
+}
+.admin-msg.respondida { border-color: rgba(255, 255, 255, 0.1); opacity: 0.75; }
+.admin-msg-topo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+.admin-msg-topo small { color: #9ca3af; }
+.admin-msg p { color: #e5e7eb; margin: 10px 0 12px; }
+
 

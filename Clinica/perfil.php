@@ -157,6 +157,10 @@ function nomePlano($valor) {
         <?php endif; ?>
       </div>
 
+      <?php if (!empty($usuario['is_admin'])): ?>
+        <a href="admin.php" class="btn-primary" style="margin-bottom:28px; display:inline-block;">Painel admin</a>
+      <?php endif; ?>
+
       <?php if (count($pagamentos) > 1): ?>
         <div class="payment-method-box" style="margin-bottom:28px;">
           <h2 class="payment-method-title">Histórico de pagamentos</h2>
