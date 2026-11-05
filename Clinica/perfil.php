@@ -25,6 +25,20 @@ if ($logado) {
     $evolucao = $stmt->fetchAll();
 }
 
+// Dados para o gráfico de evolução de peso
+$labelsPeso  = [];
+$valoresPeso = [];
+$obsPeso     = [];
+foreach ($evolucao as $r) {
+    $labelsPeso[]  = date('d/m/Y', strtotime($r['registrado_em']));
+    $valoresPeso[] = (float) $r['peso'];
+    $obsPeso[]     = $r['observacao'] ?? '';
+}
+
+$pesoInicial = $valoresPeso ? $valoresPeso[0] : null;
+$pesoAtual   = $valoresPeso ? end($valoresPeso) : null;
+$variacao    = ($pesoInicial !== null) ? round($pesoAtual - $pesoInicial, 1) : null;
+
 /* ---------------------------------------------------------
    LIBERAÇÃO DE ACESSO (Dieta e Consulta Online)
    Só libera quem tem um pagamento de plano (220, 480 ou 1290)
@@ -205,23 +219,28 @@ function nomePlano($valor) {
         </form>
 
         <?php if (count($evolucao) > 0): ?>
-          <?php
-            $pesos = array_column($evolucao, 'peso');
-            $max = max($pesos);
-            $min = min($pesos);
-            $faixa = max($max - $min, 1);
-          ?>
-          <div class="evolucao-chart">
-            <?php foreach ($evolucao as $reg):
-              $altura = 20 + (($reg['peso'] - $min) / $faixa) * 80;
-            ?>
-              <div class="evolucao-barra-wrap">
-                <div class="evolucao-barra" style="height:<?php echo $altura; ?>%;">
-                  <span class="evolucao-valor"><?php echo number_format($reg['peso'], 1, ',', '.'); ?></span>
-                </div>
-                <div class="evolucao-data"><?php echo date('d/m', strtotime($reg['registrado_em'])); ?></div>
-              </div>
-            <?php endforeach; ?>
+
+          <div class="evolucao-resumo">
+            <div class="evolucao-card">
+              <span>Peso inicial</span>
+              <strong><?php echo number_format($pesoInicial, 1, ',', '.'); ?> kg</strong>
+            </div>
+            <div class="evolucao-card">
+              <span>Peso atual</span>
+              <strong><?php echo number_format($pesoAtual, 1, ',', '.'); ?> kg</strong>
+            </div>
+            <div class="evolucao-card">
+              <span>Variação</span>
+              <strong><?php echo ($variacao > 0 ? '+' : '') . number_format($variacao, 1, ',', '.'); ?> kg</strong>
+            </div>
+          </div>
+
+          <?php if (count($valoresPeso) === 1): ?>
+            <p class="evolucao-vazia">Registre mais uma vez para ver a linha de evolução.</p>
+          <?php endif; ?>
+
+          <div class="evolucao-grafico">
+            <canvas id="graficoPeso"></canvas>
           </div>
 
           <table class="evolucao-tabela">
@@ -334,6 +353,61 @@ function nomePlano($valor) {
       </div>
       <!-- ===================== FIM DA DIETA ===================== -->
 
+      <!-- ===================== CALCULADORAS: IMC E ÁGUA ===================== -->
+      <div class="payment-method-box" id="calculadoras" style="margin-top:28px;">
+        <h2 class="payment-method-title">IMC e meta de água</h2>
+        <p class="form-note" style="margin-top:0; margin-bottom:22px;">Calcule seu Índice de Massa Corporal (IMC) e quanto de água beber por dia. O peso já vem preenchido com o seu último registro de evolução, se houver.</p>
+
+        <form id="imc-form">
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="field light">
+              <label for="imc-peso">Peso (kg)</label>
+              <input type="number" id="imc-peso" min="30" max="300" step="0.1" placeholder="Ex: 68.5" value="<?php echo $pesoAtual ? htmlspecialchars((string) $pesoAtual) : ''; ?>" required>
+            </div>
+            <div class="field light">
+              <label for="imc-altura">Altura (cm)</label>
+              <input type="number" id="imc-altura" min="100" max="230" placeholder="Ex: 170" required>
+            </div>
+          </div>
+          <div class="field light" style="margin-bottom:20px;">
+            <label for="imc-atividade">Nível de atividade física (para a meta de água)</label>
+            <select id="imc-atividade" required>
+              <option value="30">Sedentário (30 ml por kg)</option>
+              <option value="35" selected>Moderado (35 ml por kg)</option>
+              <option value="40">Intenso (40 ml por kg)</option>
+            </select>
+          </div>
+          <button type="submit" class="submit-btn" style="max-width:260px;">Calcular</button>
+        </form>
+
+        <div class="tmb-results" id="imc-resultado">
+          <div class="tmb-result-card">
+            <div class="label">Seu IMC</div>
+            <div class="value" id="imc-valor">—</div>
+          </div>
+          <div class="tmb-result-card">
+            <div class="label">Classificação</div>
+            <div class="value" id="imc-classe">—</div>
+          </div>
+          <div class="macros">
+            <div class="macro-chip">
+              <div class="m-label">Faixa de peso saudável</div>
+              <div class="m-value" id="imc-faixa">—</div>
+            </div>
+            <div class="macro-chip">
+              <div class="m-label">Meta de água / dia</div>
+              <div class="m-value" id="agua-litros">—</div>
+            </div>
+            <div class="macro-chip">
+              <div class="m-label">Em copos de 250 ml</div>
+              <div class="m-value" id="agua-copos">—</div>
+            </div>
+          </div>
+        </div>
+        <p class="form-note">Estimativas educativas para adultos. O IMC não diferencia massa muscular de gordura e não se aplica a gestantes ou menores de 18 anos. A meta de água pode mudar com clima, saúde e orientação profissional. <a href="index.php#agendar" style="text-decoration:underline;">Agende uma consulta</a> para uma avaliação individual.</p>
+      </div>
+      <!-- ===================== FIM DAS CALCULADORAS ===================== -->
+
       <!-- ===================== CONSULTA ONLINE (movida de consultaCMpersonal.php) ===================== -->
       <div class="payment-method-box" id="consulta" style="margin-top:28px;">
         <h2 class="payment-method-title">Consulta online</h2>
@@ -411,7 +485,85 @@ function nomePlano($valor) {
     nome: "<?php echo htmlspecialchars($_SESSION['user_nome'] ?? '', ENT_QUOTES); ?>"
   };
 </script>
+
+<?php if (count($valoresPeso) > 0): ?>
+<!-- ===================== GRÁFICO DE EVOLUÇÃO DE PESO ===================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const labels  = <?php echo json_encode($labelsPeso); ?>;
+    const valores = <?php echo json_encode($valoresPeso); ?>;
+    const obs     = <?php echo json_encode($obsPeso, JSON_UNESCAPED_UNICODE); ?>;
+
+    const canvas = document.getElementById('graficoPeso');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const gradiente = ctx.createLinearGradient(0, 0, 0, 320);
+    gradiente.addColorStop(0, 'rgba(250, 204, 21, 0.35)');
+    gradiente.addColorStop(1, 'rgba(250, 204, 21, 0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Peso (kg)',
+                data: valores,
+                borderColor: '#facc15',
+                backgroundColor: gradiente,
+                borderWidth: 3,
+                pointBackgroundColor: '#facc15',
+                pointBorderColor: '#0f0f1a',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1a1a2e',
+                    titleColor: '#fff',
+                    bodyColor: '#facc15',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    callbacks: {
+                        label: function (item) {
+                            return item.parsed.y.toString().replace('.', ',') + ' kg';
+                        },
+                        afterLabel: function (item) {
+                            const o = obs[item.dataIndex];
+                            return o ? o : '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#9ca3af' },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                y: {
+                    ticks: {
+                        color: '#9ca3af',
+                        callback: function (v) { return v + ' kg'; }
+                    },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                }
+            }
+        }
+    });
+})();
+</script>
+<?php endif; ?>
+
 <script src="script.js"></script>
 </body>
 </html>
-
