@@ -30,7 +30,7 @@
         <ul class="contact-info-list">
           <li>
             <h4>Telefone / WhatsApp</h4>
-            <a href="tel:+5500000000000">(00) 0000-0000</a>
+            <a href="tel:+5500000000000">(17) 98816-1285</a>
           </li>
           <li>
             <h4>E-mail</h4>
@@ -38,7 +38,7 @@
           </li>
           <li>
             <h4>Endereço</h4>
-            <p>Rua Exemplo, 123 — Centro</p>
+            <p>Rua Alfio, 0688 — Centro</p>
           </li>
           <li>
             <h4>Horário de atendimento</h4>

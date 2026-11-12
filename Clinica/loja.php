@@ -85,7 +85,7 @@ $produtos = [
     </div>
 
     <p class="form-note" style="max-width:64ch; margin-top:36px;">
-      As imagens dos produtos ficam na pasta <code>imagens/produtos</code>. Se uma foto não for encontrada, o espaço da imagem fica em branco automaticamente.
+      <!-- As imagens dos produtos ficam na pasta <code>imagens/produtos</code>. Se uma foto não for encontrada, o espaço da imagem fica em branco automaticamente. -->
     </p>
   </div>
 </section>

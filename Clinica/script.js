@@ -102,9 +102,9 @@ function renderFooter() {
           </div>
           <div class="footer-col">
             <h4>Contato</h4>
-            <a href="tel:+5500000000000">(00) 0000-0000</a>
+            <a href="tel:+5500000000000">(17) 98816-1285</a>
             <a href="mailto:contato@raizenutriente.com.br">contato@raizenutriente.com.br</a>
-            <p>Rua Exemplo, 123 — Centro</p>
+            <p>Rua Alfio, 0688 — Centro</p>
           </div>
           <div class="footer-col">
             <h4>Horário</h4>
@@ -897,3 +897,97 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('imc-resultado').style.display = 'grid';
   });
 });
+
+function iniciarSino() {
+ if (document.getElementById('sino-wrap')) return;
+const alvo = [...document.querySelectorAll('a, button')]
+  .find(el => el.textContent.trim().toLowerCase().includes('agendar consulta'));
+if (!alvo) return;
+
+  if (!document.getElementById('sino-css')) {
+    const st = document.createElement('style');
+    st.id = 'sino-css';
+    st.textContent = `
+      body > #sino-wrap { position: fixed; top: 14px; right: 16px; z-index: 9999; }
+      #sino-wrap { position: relative; display: inline-block; margin-left: 12px; }
+      #sino-btn { position: relative; background: transparent; border: 0; color: #f5c518; cursor: pointer; padding: 6px; }
+      #sino-badge { position: absolute; top: 0; right: 0; background: #e53935; color: #fff; font-size: 11px; font-weight: 700; min-width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+      #sino-badge[hidden], #sino-painel[hidden] { display: none; }
+      #sino-painel { position: absolute; right: 0; top: 42px; width: 290px; max-height: 340px; overflow-y: auto; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5); z-index: 9999; }
+      .sino-item { display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #2a2a2a; color: #fff; }
+      .sino-item.nova { background: rgba(245,197,24,.10); }
+      .sino-item strong { display: block; font-size: 14px; }
+      .sino-item small { color: #aaa; font-size: 12px; }
+      .sino-icone { font-size: 18px; }
+      .sino-vazio { padding: 16px; color: #aaa; text-align: center; margin: 0; }
+    `;
+    document.head.appendChild(st);
+  }
+
+  const wrap = document.createElement('div');
+  wrap.id = 'sino-wrap';
+  wrap.innerHTML = `
+    <button id="sino-btn" aria-label="Notificações">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        <path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6V11c0-3.1-1.6-5.6-4.5-6.3V4a1.5 1.5 0 0 0-3 0v.7C7.6 5.4 6 7.9 6 11v5l-2 2v1h16v-1l-2-2z"/>
+      </svg>
+      <span id="sino-badge" hidden>0</span>
+    </button>
+    <div id="sino-painel" hidden></div>`;
+  alvo.insertAdjacentElement('afterend', wrap);
+
+  const btn = wrap.querySelector('#sino-btn');
+  const painel = wrap.querySelector('#sino-painel');
+  const badge = wrap.querySelector('#sino-badge');
+
+  const rotulos = {
+    pendente:   ['⏳', 'Em análise', 'Recebemos seu pedido e estamos analisando.'],
+    confirmado: ['✅', 'Aprovada', 'Sua consulta foi confirmada!'],
+    recusado:   ['❌', 'Não aprovada', 'Entre em contato para reagendar.']
+  };
+
+  async function carregar() {
+    try {
+      const r = await fetch('notificacoes.php');
+      const d = await r.json();
+      if (!d.logado) { wrap.style.display = 'none'; return; }
+      wrap.style.display = '';
+      badge.hidden = d.novas === 0;
+      badge.textContent = d.novas;
+
+      if (!d.itens.length) {
+        painel.innerHTML = '<p class="sino-vazio">Nenhuma consulta agendada.</p>';
+        return;
+      }
+      painel.innerHTML = d.itens.map(i => {
+        const [icone, titulo, texto] = rotulos[i.status] || rotulos.pendente;
+        return `<div class="sino-item ${i.visto == 0 ? 'nova' : ''}">
+          <span class="sino-icone">${icone}</span>
+          <div><strong>${titulo}</strong><small>${texto}</small></div>
+        </div>`;
+      }).join('');
+    } catch (e) { console.error(e); }
+  }
+
+  btn.addEventListener('click', async () => {
+    painel.hidden = !painel.hidden;
+    if (!painel.hidden && !badge.hidden) {
+      await fetch('notificacoes.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'acao=marcar_vistas'
+      });
+      badge.hidden = true;
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if (!wrap.contains(e.target)) painel.hidden = true;
+  });
+
+  carregar();
+  setInterval(carregar, 30000);
+}
+
+document.addEventListener('DOMContentLoaded', () => setTimeout(iniciarSino, 300));
+
