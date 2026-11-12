@@ -849,51 +849,51 @@ function initCheckout() {
 }
 
 // ===================== CALCULADORAS: IMC E ÁGUA =====================
-(function () {
-    const form = document.getElementById('imc-form');
-    if (!form) return;
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('imc-form');
+  if (!form) return;
 
-    function fmt(n, casas) {
-        return n.toLocaleString('pt-BR', {
-            minimumFractionDigits: casas,
-            maximumFractionDigits: casas
-        });
-    }
-
-    function classificar(imc) {
-        if (imc < 18.5) return 'Abaixo do peso';
-        if (imc < 25)   return 'Peso normal';
-        if (imc < 30)   return 'Sobrepeso';
-        if (imc < 35)   return 'Obesidade grau I';
-        if (imc < 40)   return 'Obesidade grau II';
-        return 'Obesidade grau III';
-    }
-
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const peso     = parseFloat(document.getElementById('imc-peso').value);
-        const alturaCm = parseFloat(document.getElementById('imc-altura').value);
-        const mlPorKg  = parseFloat(document.getElementById('imc-atividade').value);
-
-        if (!peso || !alturaCm) return;
-
-        const alturaM = alturaCm / 100;
-        const imc = peso / (alturaM * alturaM);
-
-        // Faixa de peso para IMC entre 18,5 e 24,9
-        const pesoMin = 18.5 * alturaM * alturaM;
-        const pesoMax = 24.9 * alturaM * alturaM;
-
-        // Água: ml por kg de peso
-        const mlTotal = peso * mlPorKg;
-        const litros = mlTotal / 1000;
-        const copos = Math.round(mlTotal / 250);
-
-        document.getElementById('imc-valor').textContent   = fmt(imc, 1);
-        document.getElementById('imc-classe').textContent  = classificar(imc);
-        document.getElementById('imc-faixa').textContent   = fmt(pesoMin, 1) + ' a ' + fmt(pesoMax, 1) + ' kg';
-        document.getElementById('agua-litros').textContent = fmt(litros, 1) + ' L';
-        document.getElementById('agua-copos').textContent  = copos + ' copos';
+  function fmt(n, casas) {
+    return n.toLocaleString('pt-BR', {
+      minimumFractionDigits: casas,
+      maximumFractionDigits: casas
     });
-})();
+  }
+
+  function classificar(imc) {
+    if (imc < 18.5) return 'Abaixo do peso';
+    if (imc < 25)  return 'Peso normal';
+    if (imc < 30)  return 'Sobrepeso';
+    if (imc < 35)  return 'Obesidade grau I';
+    if (imc < 40)  return 'Obesidade grau II';
+    return 'Obesidade grau III';
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const peso     = parseFloat(document.getElementById('imc-peso').value);
+    const alturaCm = parseFloat(document.getElementById('imc-altura').value);
+    const mlPorKg  = parseFloat(document.getElementById('imc-atividade').value);
+
+    if (!peso || !alturaCm) return;
+
+    const alturaM = alturaCm / 100;
+    const imc     = peso / (alturaM * alturaM);
+
+    const pesoMin = 18.5 * alturaM * alturaM;
+    const pesoMax = 24.9 * alturaM * alturaM;
+
+    const mlTotal = peso * mlPorKg;
+    const litros  = mlTotal / 1000;
+    const copos   = Math.round(mlTotal / 250);
+
+    document.getElementById('imc-valor').textContent   = fmt(imc, 1);
+    document.getElementById('imc-classe').textContent  = classificar(imc);
+    document.getElementById('imc-faixa').textContent   = fmt(pesoMin, 1) + ' – ' + fmt(pesoMax, 1) + ' kg';
+    document.getElementById('agua-litros').textContent = fmt(litros, 1) + ' L';
+    document.getElementById('agua-copos').textContent  = copos + ' copos';
+
+    document.getElementById('imc-resultado').style.display = 'grid';
+  });
+});
