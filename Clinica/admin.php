@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($acao === 'agendamento_status' && in_array($novo, ['pendente', 'confirmado', 'cancelado'], true)) {
-        $pdo->prepare('UPDATE agendamentos SET status = ? WHERE id = ?')->execute([$novo, $id]);
+      $pdo->prepare('UPDATE agendamentos SET status = ?, visto = 0 WHERE id = ?')->execute([$novo, $id]);
         $_SESSION['flash'] = 'Agendamento atualizado para "' . $novo . '".';
     }
 

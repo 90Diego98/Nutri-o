@@ -943,7 +943,7 @@ if (!alvo) return;
   const rotulos = {
     pendente:   ['⏳', 'Em análise', 'Recebemos seu pedido e estamos analisando.'],
     confirmado: ['✅', 'Aprovada', 'Sua consulta foi confirmada!'],
-    recusado:   ['❌', 'Não aprovada', 'Entre em contato para reagendar.']
+    cancelado:  ['❌', 'Não aprovada', 'Entre em contato para reagendar.']
   };
 
   async function carregar() {
