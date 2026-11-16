@@ -61,10 +61,20 @@ $payload = montarPayloadPix(
 );
 
 $usuarioId = $_SESSION['user_id'] ?? null;
+$itens = json_decode($_POST['itens'] ?? '[]', true);
 
-$stmt = $pdo->prepare('INSERT INTO pagamentos (usuario_id, valor, txid, status) VALUES (?, ?, ?, ?)');
-$stmt->execute([$usuarioId, $valor, $txid, 'pendente']);
+$stmt = $pdo->prepare('INSERT INTO pagamentos (usuario_id, valor, txid, status, forma) VALUES (?, ?, ?, ?, ?)');
+$stmt->execute([$usuarioId, $valor, $txid, 'pendente', 'pix']);
+$pagamentoId = $pdo->lastInsertId();
+
+if (is_array($itens)) {
+    $it = $pdo->prepare('INSERT INTO pagamento_itens (pagamento_id, produto_nome, preco, quantidade) VALUES (?, ?, ?, ?)');
+    foreach ($itens as $i) {
+        $it->execute([$pagamentoId, $i['nome'], (float) $i['preco'], (int) $i['qtd']]);
+    }
+}
 
 echo json_encode(['ok' => true, 'payload' => $payload]);
+
 
 

@@ -6,6 +6,7 @@ $usuario = null;
 $pagamentos = [];
 $agendamentos = [];
 $evolucao = [];
+$compras = [];
 
 if ($logado) {
     $stmt = $pdo->prepare('SELECT nome, email, foto, foto_aprovada, criado_em, is_admin FROM usuarios WHERE id = ?');
@@ -23,6 +24,18 @@ if ($logado) {
     $stmt = $pdo->prepare('SELECT peso, observacao, registrado_em FROM evolucao WHERE usuario_id = ? ORDER BY registrado_em ASC');
     $stmt->execute([$_SESSION['user_id']]);
     $evolucao = $stmt->fetchAll();
+
+    // Histórico de compras da loja (produtos comprados)
+    $stmt = $pdo->prepare("
+        SELECT p.id, p.forma, p.status, p.criado_em,
+               i.produto_nome, i.preco, i.quantidade
+        FROM pagamentos p
+        JOIN pagamento_itens i ON i.pagamento_id = p.id
+        WHERE p.usuario_id = ?
+        ORDER BY p.criado_em DESC, i.id ASC
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+    $compras = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Dados para o gráfico de evolução de peso
@@ -179,6 +192,39 @@ function nomePlano($valor) {
           </table>
         </div>
       <?php endif; ?>
+
+      <!-- ===================== MEUS PEDIDOS (compras da loja) ===================== -->
+      <div class="payment-method-box" id="pedidos" style="margin-bottom:28px;">
+        <h2 class="payment-method-title">Meus pedidos</h2>
+        <?php if (!$compras): ?>
+          <p class="form-note" style="margin-top:0;">Você ainda não comprou nada na loja.</p>
+          <a href="loja.php" class="btn-primary" style="margin-top:12px; display:inline-block;">Ir para a loja</a>
+        <?php else: ?>
+          <div class="pedidos-lista">
+            <?php foreach ($compras as $c): ?>
+              <div class="pedido-card">
+                <div class="pedido-info">
+                  <div class="pedido-nome">
+                    <?php echo htmlspecialchars($c['produto_nome']); ?>
+                    <span class="pedido-qtd">× <?php echo (int) $c['quantidade']; ?></span>
+                  </div>
+                  <div class="pedido-meta">
+                    <?php echo date('d/m/Y', strtotime($c['criado_em'])); ?>
+                    · <?php echo $c['forma'] === 'cartao' ? 'Cartão' : 'Pix'; ?>
+                  </div>
+                </div>
+                <div class="pedido-direita">
+                  <strong class="pedido-preco">
+                    R$ <?php echo number_format($c['preco'] * $c['quantidade'], 2, ',', '.'); ?>
+                  </strong>
+                  <span class="pedido-status"><?php echo htmlspecialchars($c['status']); ?></span>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+      </div>
+      <!-- ===================== FIM DOS PEDIDOS ===================== -->
 
       <div class="payment-method-box" style="margin-bottom:28px;">
         <h2 class="payment-method-title">Minhas consultas</h2>
@@ -571,3 +617,4 @@ function nomePlano($valor) {
 <script src="script.js"></script>
 </body>
 </html>
+
