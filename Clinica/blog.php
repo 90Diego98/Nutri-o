@@ -58,12 +58,10 @@ if ($logado) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>document.documentElement.dataset.theme = localStorage.getItem('tema') || 'dark';</script>
 <link rel="stylesheet" href="estiloa.css">
 </head>
 <body data-page="blog">
-
-<a href="index.php" class="btn-primary" style="position:fixed; top:20px; left:20px; z-index:100;">Voltar</a>
-
 
 <div id="site-header"></div>
 
@@ -352,6 +350,14 @@ if ($logado) {
 })();
 </script>
 
+<script>
+  window.SITE_SESSION = {
+    logged: <?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>,
+    nome: "<?php echo htmlspecialchars($_SESSION['user_nome'] ?? '', ENT_QUOTES); ?>"
+  };
+</script>
+<script src="script.js"></script>
 
 </body>
 </html>
+
