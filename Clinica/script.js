@@ -38,7 +38,7 @@ function renderHeader() {
   const page = document.body.dataset.page || '';
   const session = getSession();
 
-    const links = [
+  const links = [
     { href: 'index.php', label: 'Início', key: 'index' },
     { href: 'Sobre_Nos.php', label: 'Sobre Nós', key: 'sobre' },
     { href: 'planosDeProjetiho.php', label: 'Planos', key: 'planos' },
@@ -54,7 +54,7 @@ function renderHeader() {
     .join('');
 
   const authHtml = session.logged
-? `<a href="perfil.php" class="nav-user" style="text-decoration:none; display:flex; align-items:center; gap:8px;"><span class="nav-avatar" id="nav-avatar"></span>${escapeHtml(session.nome)}</a><a href="logout.php" class="nav-cta">Sair</a>`
+    ? `<a href="perfil.php" class="nav-user" style="text-decoration:none; display:flex; align-items:center; gap:8px;"><span class="nav-avatar" id="nav-avatar"></span>${escapeHtml(session.nome)}</a><a href="logout.php" class="nav-cta">Sair</a>`
     : `<a href="entrar.php" class="nav-login" style="text-decoration:none; display:inline-block;">Entrar</a>`;
 
   headerEl.innerHTML = `
@@ -66,6 +66,7 @@ function renderHeader() {
         <div class="nav-actions">
           ${authHtml}
           <a href="index.php#agendar" class="nav-cta">Agendar consulta</a>
+          <button id="tema-toggle" type="button" aria-label="Alternar tema"><svg class="ico-sol" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="ico-lua" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
         </div>
       </nav>
     </header>
@@ -102,7 +103,7 @@ function renderFooter() {
           </div>
           <div class="footer-col">
             <h4>Contato</h4>
-            <a href="tel:+5500000000000">(17) 98816-1285</a>
+            <a href="tel:+5517988161285">(17) 98816-1285</a>
             <a href="mailto:contato@raizenutriente.com.br">contato@raizenutriente.com.br</a>
             <p>Rua Alfio, 0688 — Centro</p>
           </div>
@@ -899,10 +900,10 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function iniciarSino() {
- if (document.getElementById('sino-wrap')) return;
-const alvo = [...document.querySelectorAll('a, button')]
-  .find(el => el.textContent.trim().toLowerCase().includes('agendar consulta'));
-if (!alvo) return;
+  if (document.getElementById('sino-wrap')) return;
+  const alvo = [...document.querySelectorAll('a, button')]
+    .find(el => el.textContent.trim().toLowerCase().includes('agendar consulta'));
+  if (!alvo) return;
 
   if (!document.getElementById('sino-css')) {
     const st = document.createElement('style');
@@ -990,4 +991,18 @@ if (!alvo) return;
 }
 
 document.addEventListener('DOMContentLoaded', () => setTimeout(iniciarSino, 300));
+
+/* ---------------------------------------------------------
+   TEMA CLARO / ESCURO — botão sol/lua no cabeçalho
+   (o tema salvo é aplicado no <head> de cada página)
+--------------------------------------------------------- */
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('#tema-toggle')) return;
+  const novo = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = novo;
+  localStorage.setItem('tema', novo);
+});
+
+
+
 
