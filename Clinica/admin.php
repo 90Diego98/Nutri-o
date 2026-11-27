@@ -27,6 +27,7 @@ $abas = [
     'agendamentos' => 'Agendamentos',
     'fotos'        => 'Fotos de perfil',
     'mensagens'    => 'Mensagens',
+    'usuarios'     => 'Usuários',
 ];
 $aba = $_GET['aba'] ?? 'resumo';
 if (!isset($abas[$aba])) $aba = 'resumo';
@@ -75,6 +76,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($acao === 'msg_alternar') {
         $pdo->prepare('UPDATE contatos SET respondido = 1 - respondido WHERE id = ?')->execute([$id]);
         $_SESSION['flash'] = 'Mensagem atualizada.';
+    }
+
+    /* ----- Bloquear / desbloquear conta ----- */
+    if ($acao === 'banir') {
+        $motivo = trim((string) ($_POST['motivo'] ?? ''));
+        $q = $pdo->prepare('SELECT id, usuario, is_admin FROM usuarios WHERE id = ?');
+        $q->execute([$id]);
+        $alvo = $q->fetch();
+
+        if (!$alvo) {
+            $_SESSION['flash'] = 'Conta não encontrada.';
+        } elseif (!empty($alvo['is_admin'])) {
+            $_SESSION['flash'] = 'Não é possível bloquear uma conta de administrador.';
+        } elseif ((int) $alvo['id'] === (int) $_SESSION['user_id']) {
+            $_SESSION['flash'] = 'Você não pode bloquear a si mesmo.';
+        } elseif ($motivo === '') {
+            $_SESSION['flash'] = 'Escreva o motivo do bloqueio.';
+        } else {
+            $motivo = mb_substr($motivo, 0, 255);
+            $pdo->prepare('UPDATE usuarios SET banido = 1, motivo_ban = ?, banido_em = NOW() WHERE id = ? AND is_admin = 0')
+                ->execute([$motivo, $id]);
+            $_SESSION['flash'] = 'Conta @' . $alvo['usuario'] . ' bloqueada.';
+        }
+    }
+
+    if ($acao === 'desbanir') {
+        $pdo->prepare('UPDATE usuarios SET banido = 0, motivo_ban = NULL, banido_em = NULL WHERE id = ?')->execute([$id]);
+        $_SESSION['flash'] = 'Conta desbloqueada.';
     }
 
     header('Location: admin.php?aba=' . $voltar);
@@ -150,6 +179,23 @@ if ($aba === 'mensagens') {
            FROM contatos
           ORDER BY respondido ASC, criado_em DESC
           LIMIT 100"
+    )->fetchAll();
+}
+
+$busca = '';
+$achado = null;
+$banidos = [];
+if ($aba === 'usuarios') {
+    $busca = ltrim(trim((string) ($_GET['q'] ?? '')), '@');
+    if ($busca !== '') {
+        // a coluna é utf8mb4_unicode_ci: "Ana" e "ana" são a mesma conta
+        $q = $pdo->prepare('SELECT id, nome, usuario, email, is_admin, banido, motivo_ban FROM usuarios WHERE usuario = ? LIMIT 1');
+        $q->execute([$busca]);
+        $achado = $q->fetch() ?: false;
+    }
+    $banidos = $pdo->query(
+        'SELECT id, nome, usuario, email, motivo_ban, banido_em
+           FROM usuarios WHERE banido = 1 ORDER BY banido_em DESC LIMIT 100'
     )->fetchAll();
 }
 ?>
@@ -316,6 +362,78 @@ if ($aba === 'mensagens') {
               <?php btn($csrf, 'mensagens', 'msg_alternar', $m['id'], $m['respondido'] ? 'Reabrir' : 'Marcar como respondida'); ?>
             </div>
           <?php endforeach; ?>
+        <?php endif; ?>
+      </div>
+
+    <?php elseif ($aba === 'usuarios'): ?>
+
+      <div class="payment-method-box">
+        <h2 class="payment-method-title">Bloquear conta</h2>
+        <p class="form-note" style="margin-top:0;">Digite o nome de usuário, confira se é a pessoa certa e confirme o bloqueio.</p>
+
+        <form method="get" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+          <input type="hidden" name="aba" value="usuarios">
+          <input type="text" name="q" value="<?php echo htmlspecialchars($busca); ?>" placeholder="Nome de usuário (ex.: ana.silva)" maxlength="30" style="flex:1; min-width:200px; padding:12px; border-radius:10px;" required>
+          <button type="submit" class="admin-btn">Buscar</button>
+        </form>
+
+        <?php if ($busca !== '' && $achado === false): ?>
+          <p class="form-note">Nenhuma conta com o nome de usuário “<?php echo htmlspecialchars($busca); ?>”.</p>
+
+        <?php elseif ($achado): ?>
+          <div class="admin-msg">
+            <div class="admin-msg-topo">
+              <strong><?php echo htmlspecialchars($achado['nome']); ?></strong>
+              <small>@<?php echo htmlspecialchars($achado['usuario']); ?> · <?php echo htmlspecialchars($achado['email']); ?></small>
+              <?php if (!empty($achado['is_admin'])): ?>
+                <?php echo badge('admin'); ?>
+              <?php elseif (!empty($achado['banido'])): ?>
+                <?php echo badge('bloqueado'); ?>
+              <?php endif; ?>
+            </div>
+
+            <?php if (!empty($achado['is_admin'])): ?>
+              <p>Esta conta é de administrador e não pode ser bloqueada.</p>
+
+            <?php elseif (!empty($achado['banido'])): ?>
+              <p><strong>Motivo:</strong> <?php echo htmlspecialchars((string) $achado['motivo_ban']); ?></p>
+              <?php btn($csrf, 'usuarios', 'desbanir', $achado['id'], 'Desbloquear', [], 'Desbloquear esta conta?'); ?>
+
+            <?php else: ?>
+              <form method="post" onsubmit="return confirm('Bloquear a conta @<?php echo htmlspecialchars($achado['usuario'], ENT_QUOTES); ?>?');">
+                <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($csrf); ?>">
+                <input type="hidden" name="aba" value="usuarios">
+                <input type="hidden" name="acao" value="banir">
+                <input type="hidden" name="id" value="<?php echo (int) $achado['id']; ?>">
+                <label for="motivo" class="form-note" style="display:block; margin:8px 0 6px;">Motivo do bloqueio (a pessoa vai ver isso)</label>
+                <textarea id="motivo" name="motivo" rows="3" maxlength="255" required placeholder="Ex.: Ofensas a outros usuários" style="width:100%; padding:12px; border-radius:10px; box-sizing:border-box;"></textarea>
+                <div style="margin-top:10px;"><button type="submit" class="admin-btn">Confirmar bloqueio</button></div>
+              </form>
+            <?php endif; ?>
+          </div>
+        <?php endif; ?>
+      </div>
+
+      <div class="payment-method-box" style="margin-top:20px;">
+        <h2 class="payment-method-title">Contas bloqueadas</h2>
+        <?php if (count($banidos) === 0): ?>
+          <p class="form-note" style="margin-top:0;">Nenhuma conta bloqueada.</p>
+        <?php else: ?>
+          <div class="admin-scroll">
+          <table class="evolucao-tabela">
+            <thead><tr><th>Usuário</th><th>Motivo</th><th>Quando</th><th>Ação</th></tr></thead>
+            <tbody>
+              <?php foreach ($banidos as $b): ?>
+                <tr>
+                  <td>@<?php echo htmlspecialchars($b['usuario']); ?><br><small><?php echo htmlspecialchars($b['nome']); ?> · <?php echo htmlspecialchars($b['email']); ?></small></td>
+                  <td><?php echo htmlspecialchars((string) $b['motivo_ban']); ?></td>
+                  <td><?php echo $b['banido_em'] ? date('d/m/Y H:i', strtotime($b['banido_em'])) : '—'; ?></td>
+                  <td><?php btn($csrf, 'usuarios', 'desbanir', $b['id'], 'Desbloquear', [], 'Desbloquear esta conta?'); ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+          </div>
         <?php endif; ?>
       </div>
 

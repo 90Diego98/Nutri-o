@@ -201,6 +201,7 @@ function initAuthPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nome: document.getElementById('register-nome').value,
+        usuario: document.getElementById('register-usuario').value.trim(),
         email: document.getElementById('register-email').value,
         senha: senha
       })
@@ -1002,7 +1003,3 @@ document.addEventListener('click', function (e) {
   document.documentElement.dataset.theme = novo;
   localStorage.setItem('tema', novo);
 });
-
-
-
-
