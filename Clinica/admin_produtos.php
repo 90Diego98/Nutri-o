@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once 'config.php'; // define $pdo
 
 // só admin entra
