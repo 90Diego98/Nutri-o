@@ -9,26 +9,10 @@ function e($texto) {
     return htmlspecialchars((string)$texto, ENT_QUOTES, 'UTF-8');
 }
 
-$produtos = [
-    // Suplementos
-    ['nome' => 'Whey Protein Concentrado', 'descricao' => 'Proteína em pó, 900g, sabor baunilha.', 'preco' => 129.90, 'imagem' => 'imagens/produtos/whey.jpg'],
-    ['nome' => 'Creatina Monohidratada', 'descricao' => 'Creatina pura, 250g.', 'preco' => 69.90, 'imagem' => 'imagens/produtos/creatina.jpg'],
-    ['nome' => 'Multivitamínico', 'descricao' => 'Complexo vitamínico diário, 120 cápsulas.', 'preco' => 49.90, 'imagem' => 'imagens/produtos/multivitaminico.jpg'],
-    ['nome' => 'Ômega 3', 'descricao' => 'Óleo de peixe, 120 cápsulas.', 'preco' => 59.90, 'imagem' => 'imagens/produtos/omega3.jpg'],
-    ['nome' => 'Barrinha Proteica (caixa)', 'descricao' => 'Caixa com 12 unidades, sabor chocolate.', 'preco' => 44.90, 'imagem' => 'imagens/produtos/barrinha.jpg'],
-
-    // Acessórios
-    ['nome' => 'Coqueteleira', 'descricao' => 'Coqueteleira 600ml com misturador.', 'preco' => 24.90, 'imagem' => 'imagens/produtos/coqueteleira.jpg'],
-    ['nome' => 'Luvas de Treino', 'descricao' => 'Luvas para musculação, com proteção na palma.', 'preco' => 39.90, 'imagem' => 'imagens/produtos/luvas.jpg'],
-    ['nome' => 'Munhequeira', 'descricao' => 'Par de munhequeiras com ajuste em velcro.', 'preco' => 29.90, 'imagem' => 'imagens/produtos/munhequeira.jpg'],
-    ['nome' => 'Cinto de Musculação', 'descricao' => 'Cinto de apoio lombar para treinos pesados.', 'preco' => 79.90, 'imagem' => 'imagens/produtos/cinto.jpg'],
-    ['nome' => 'Corda de Pular', 'descricao' => 'Corda ajustável com cabo antiderrapante.', 'preco' => 19.90, 'imagem' => 'imagens/produtos/corda.jpg'],
-    ['nome' => 'Faixa Elástica', 'descricao' => 'Mini band de resistência para treinos funcionais.', 'preco' => 24.90, 'imagem' => 'imagens/produtos/faixa-elastica.jpg'],
-    ['nome' => 'Toalha de Academia', 'descricao' => 'Toalha de microfibra, secagem rápida.', 'preco' => 22.90, 'imagem' => 'imagens/produtos/toalha.jpg'],
-    ['nome' => 'Garrafa Squeeze 1L', 'descricao' => 'Garrafa esportiva de 1 litro com bico retrátil.', 'preco' => 27.90, 'imagem' => 'imagens/produtos/garrafa.jpg'],
-    ['nome' => 'Strap de Punho', 'descricao' => 'Par de straps para levantamento, reforça a pegada.', 'preco' => 18.90, 'imagem' => 'imagens/produtos/strap.jpg'],
-    ['nome' => 'Mochila de Treino', 'descricao' => 'Mochila esportiva com compartimento para tênis.', 'preco' => 89.90, 'imagem' => 'imagens/produtos/mochila.jpg'],
-];
+// Produtos agora vêm do banco (cadastrados em admin_produtos.php)
+$produtos = $pdo->query(
+    'SELECT id, nome, descricao, preco, imagem FROM produtos WHERE ativo = 1 ORDER BY id'
+)->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -140,9 +124,13 @@ $produtos = [
 
 <section class="section alt-bg">
   <div class="wrap">
+    <?php if (empty($produtos)): ?>
+      <div class="form-note">Nenhum produto disponível no momento.</div>
+    <?php endif; ?>
+
     <div class="produto-grid">
       <?php foreach ($produtos as $p): ?>
-        <?php $precoNum = number_format($p['preco'], 2, '.', ''); ?>
+        <?php $precoNum = number_format((float)$p['preco'], 2, '.', ''); ?>
         <div class="produto-card">
           <div class="produto-imagem" role="button" tabindex="0" aria-label="Ampliar <?php echo e($p['nome']); ?>">
             <img src="<?php echo e($p['imagem']); ?>" alt="<?php echo e($p['nome']); ?>" loading="lazy" onerror="this.style.display='none'">
@@ -150,7 +138,7 @@ $produtos = [
           <div class="produto-info">
             <h3><?php echo e($p['nome']); ?></h3>
             <p><?php echo e($p['descricao']); ?></p>
-            <div class="produto-preco">R$ <?php echo number_format($p['preco'], 2, ',', '.'); ?></div>
+            <div class="produto-preco">R$ <?php echo number_format((float)$p['preco'], 2, ',', '.'); ?></div>
             <div style="display:grid; gap:8px;">
               <a href="checkout.php?valor=<?php echo $precoNum; ?>&produto=<?php echo urlencode($p['nome']); ?>" class="btn-primary" style="width:100%; text-align:center; display:block;">Comprar agora</a>
               <button type="button" class="btn-primary add-carrinho-btn"
@@ -201,6 +189,8 @@ $produtos = [
 <script>
 (function () {
   var cards = Array.prototype.slice.call(document.querySelectorAll('.produto-card'));
+  if (!cards.length) return; // loja vazia: nada a configurar
+
   var overlay = document.getElementById('lb-overlay');
   var elImg = document.getElementById('lb-img');
   var elNome = document.getElementById('lb-nome');

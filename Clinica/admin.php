@@ -193,6 +193,7 @@ if ($aba === 'mensagens') {
         </a>
       <?php endforeach; ?>
       <a href="admin_blog.php" class="admin-aba">Blog</a>
+      <a href="admin_produtos.php" class="admin-aba">Produtos</a>
     </div>
 
     <?php if ($aba === 'resumo'): ?>
