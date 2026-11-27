@@ -11,7 +11,7 @@ function e($texto) {
 
 // Produtos agora vêm do banco (cadastrados em admin_produtos.php)
 $produtos = $pdo->query(
-    'SELECT id, nome, descricao, preco, imagem FROM produtos WHERE ativo = 1 ORDER BY id'
+    'SELECT id, nome, descricao, preco, imagem, estoque FROM produtos WHERE ativo = 1 ORDER BY id'
 )->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
@@ -27,6 +27,15 @@ $produtos = $pdo->query(
 <style>
   /* Foto clicável nos cards */
   .produto-imagem { cursor: zoom-in; }
+
+  /* Estoque */
+  .produto-estoque { font-size: .85rem; font-weight: 600; margin: -4px 0 12px; color: #2e9e4f; }
+  .produto-estoque.baixo { color: #e0a800; }
+  .produto-estoque.zerado { color: #d9534f; }
+  .btn-desativado { opacity: .45; pointer-events: none; cursor: not-allowed; }
+  .lb-estoque { font-size: .9rem; font-weight: 600; color: #2e9e4f; }
+  .lb-estoque.baixo { color: #b38600; }
+  .lb-estoque.zerado { color: #d9534f; }
 
   /* Tela grande do produto */
   .lb-overlay {
@@ -130,8 +139,16 @@ $produtos = $pdo->query(
 
     <div class="produto-grid">
       <?php foreach ($produtos as $p): ?>
-        <?php $precoNum = number_format((float)$p['preco'], 2, '.', ''); ?>
-        <div class="produto-card">
+        <?php
+          $precoNum = number_format((float)$p['preco'], 2, '.', '');
+          $estoque  = (int)$p['estoque'];
+          $esgotado = $estoque <= 0;
+          $classeEstoque = $esgotado ? 'zerado' : ($estoque <= 5 ? 'baixo' : '');
+          $textoEstoque  = $esgotado
+              ? 'Esgotado'
+              : 'Em estoque: ' . $estoque . ($estoque === 1 ? ' unidade' : ' unidades');
+        ?>
+        <div class="produto-card" data-estoque="<?php echo $estoque; ?>">
           <div class="produto-imagem" role="button" tabindex="0" aria-label="Ampliar <?php echo e($p['nome']); ?>">
             <img src="<?php echo e($p['imagem']); ?>" alt="<?php echo e($p['nome']); ?>" loading="lazy" onerror="this.style.display='none'">
           </div>
@@ -139,15 +156,24 @@ $produtos = $pdo->query(
             <h3><?php echo e($p['nome']); ?></h3>
             <p><?php echo e($p['descricao']); ?></p>
             <div class="produto-preco">R$ <?php echo number_format((float)$p['preco'], 2, ',', '.'); ?></div>
+            <div class="produto-estoque <?php echo $classeEstoque; ?>"><?php echo e($textoEstoque); ?></div>
             <div style="display:grid; gap:8px;">
-              <a href="checkout.php?valor=<?php echo $precoNum; ?>&produto=<?php echo urlencode($p['nome']); ?>" class="btn-primary" style="width:100%; text-align:center; display:block;">Comprar agora</a>
-              <button type="button" class="btn-primary add-carrinho-btn"
-                data-nome="<?php echo e($p['nome']); ?>"
-                data-preco="<?php echo $precoNum; ?>"
-                data-imagem="<?php echo e($p['imagem']); ?>"
-                style="width:100%; text-align:center;">
-                Adicionar ao carrinho
-              </button>
+              <?php if ($esgotado): ?>
+                <a href="#" class="btn-primary btn-desativado" aria-disabled="true" tabindex="-1" style="width:100%; text-align:center; display:block;">Comprar agora</a>
+                <button type="button" class="btn-primary add-carrinho-btn btn-desativado" disabled style="width:100%; text-align:center;">
+                  Adicionar ao carrinho
+                </button>
+              <?php else: ?>
+                <a href="checkout.php?valor=<?php echo $precoNum; ?>&produto=<?php echo urlencode($p['nome']); ?>" class="btn-primary" style="width:100%; text-align:center; display:block;">Comprar agora</a>
+                <button type="button" class="btn-primary add-carrinho-btn"
+                  data-nome="<?php echo e($p['nome']); ?>"
+                  data-preco="<?php echo $precoNum; ?>"
+                  data-imagem="<?php echo e($p['imagem']); ?>"
+                  data-estoque="<?php echo $estoque; ?>"
+                  style="width:100%; text-align:center;">
+                  Adicionar ao carrinho
+                </button>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -169,6 +195,7 @@ $produtos = $pdo->query(
       <h3 id="lb-nome"></h3>
       <p id="lb-desc"></p>
       <div class="lb-preco" id="lb-preco"></div>
+      <div class="lb-estoque" id="lb-estoque"></div>
       <a id="lb-comprar" class="btn-primary" href="#">Comprar agora</a>
       <button type="button" id="lb-add" class="btn-primary">Adicionar ao carrinho</button>
     </div>
@@ -196,6 +223,7 @@ $produtos = $pdo->query(
   var elNome = document.getElementById('lb-nome');
   var elDesc = document.getElementById('lb-desc');
   var elPreco = document.getElementById('lb-preco');
+  var elEstoque = document.getElementById('lb-estoque');
   var elContador = document.getElementById('lb-contador');
   var elComprar = document.getElementById('lb-comprar');
   var elAdd = document.getElementById('lb-add');
@@ -206,6 +234,7 @@ $produtos = $pdo->query(
     atual = (i + cards.length) % cards.length;
     var card = cards[atual];
     var img = card.querySelector('.produto-imagem img');
+    var estoque = parseInt(card.getAttribute('data-estoque'), 10) || 0;
 
     elImg.style.display = '';
     elImg.onerror = function () { elImg.style.display = 'none'; };
@@ -214,8 +243,23 @@ $produtos = $pdo->query(
     elNome.textContent = card.querySelector('h3').textContent;
     elDesc.textContent = card.querySelector('.produto-info p').textContent;
     elPreco.textContent = card.querySelector('.produto-preco').textContent;
-    elComprar.href = card.querySelector('a.btn-primary').getAttribute('href');
     elContador.textContent = (atual + 1) + ' de ' + cards.length;
+
+    // Estoque na tela grande
+    elEstoque.textContent = card.querySelector('.produto-estoque').textContent;
+    elEstoque.className = 'lb-estoque' + (estoque <= 0 ? ' zerado' : (estoque <= 5 ? ' baixo' : ''));
+
+    if (estoque <= 0) {
+      elComprar.setAttribute('href', '#');
+      elComprar.classList.add('btn-desativado');
+      elAdd.disabled = true;
+      elAdd.classList.add('btn-desativado');
+    } else {
+      elComprar.setAttribute('href', card.querySelector('a.btn-primary').getAttribute('href'));
+      elComprar.classList.remove('btn-desativado');
+      elAdd.disabled = false;
+      elAdd.classList.remove('btn-desativado');
+    }
 
     clearTimeout(timerAdd);
     elAdd.textContent = 'Adicionar ao carrinho';
@@ -257,6 +301,7 @@ $produtos = $pdo->query(
 
   // Adicionar ao carrinho usa o botão do próprio card
   elAdd.addEventListener('click', function () {
+    if (elAdd.disabled) return;
     var botao = cards[atual].querySelector('.add-carrinho-btn');
     if (botao) botao.click();
     elAdd.textContent = 'Adicionado ✓';
